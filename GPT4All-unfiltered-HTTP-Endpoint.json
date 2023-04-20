@@ -1,0 +1,184 @@
+[
+    {
+        "id": "8e62a51550a8eeed",
+        "type": "comment",
+        "z": "50ed45470ea01d88",
+        "name": "GPT4All (unfiltered)",
+        "info": "",
+        "x": 770,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "9631a0ec5f68f26c",
+        "type": "http in",
+        "z": "50ed45470ea01d88",
+        "name": "",
+        "url": "gpt4all-unfiltered",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 780,
+        "y": 720,
+        "wires": [
+            [
+                "02c36e6778798533"
+            ]
+        ]
+    },
+    {
+        "id": "91691bf8bbeed23f",
+        "type": "function",
+        "z": "50ed45470ea01d88",
+        "name": "GPT4All (unfiltered)",
+        "func": "(async () => {\n  let Prompt = (msg.payload || '').trim()\n  if (Prompt === '') {\n    msg.payload = 'empty or missing prompt'\n    node.send([null,msg])\n    return\n  }\n  \n/**** retrieve GPT4All or load it upon the first request ****/\n  \n  let GPT4All = global.get('GPT4All-unfiltered')\n  if (GPT4All == null) {\n    GPT4All = new gpt4all.GPT4All('gpt4all-lora-unfiltered-quantized',true)\n  \n    await GPT4All.init()\n    node.log('GPT4All \"unfiltered\" has been initialized')\n  \n    await GPT4All.open()\n    global.set('GPT4All-unfiltered',GPT4All)\n    node.log('GPT4All \"unfiltered\" may be used')\n    \n    node.on('close',(done) => {\n      node.log('GPT4All \"unfiltered\" is being closed')\n      global.set('GPT4All-unfiltered',null)\n      GPT4All.close()\n      done()\n    })\n  }\n  \n/**** now infer a response from the given prompt ****/\n  \n  let Response = await GPT4All.prompt(Prompt)\n  \n  msg.payload = Response.replace(/^[^m]+?m[^m]+?m[^m]+?m/,'')\n  node.send([msg,null])\n})()\n",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "gpt4all",
+                "module": "gpt4all"
+            }
+        ],
+        "x": 990,
+        "y": 780,
+        "wires": [
+            [
+                "3373b2e153a0bc96",
+                "0bc39b3e759a2057"
+            ],
+            [
+                "573fe29eeb72ad51"
+            ]
+        ]
+    },
+    {
+        "id": "e13bdfe314f99de5",
+        "type": "debug",
+        "z": "50ed45470ea01d88",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "'Prompt: \"' & msg.payload & '\"'",
+        "targetType": "jsonata",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 820,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "02c36e6778798533",
+        "type": "change",
+        "z": "50ed45470ea01d88",
+        "name": "parse query",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "req.query.prompt",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 790,
+        "y": 780,
+        "wires": [
+            [
+                "91691bf8bbeed23f",
+                "e13bdfe314f99de5"
+            ]
+        ]
+    },
+    {
+        "id": "b861ff259aeb92cf",
+        "type": "http response",
+        "z": "50ed45470ea01d88",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1190,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "573fe29eeb72ad51",
+        "type": "change",
+        "z": "50ed45470ea01d88",
+        "name": "400",
+        "rules": [
+            {
+                "t": "set",
+                "p": "statusCode",
+                "pt": "msg",
+                "to": "400",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1170,
+        "y": 820,
+        "wires": [
+            [
+                "b861ff259aeb92cf"
+            ]
+        ]
+    },
+    {
+        "id": "3373b2e153a0bc96",
+        "type": "change",
+        "z": "50ed45470ea01d88",
+        "name": "200",
+        "rules": [
+            {
+                "t": "set",
+                "p": "statusCode",
+                "pt": "msg",
+                "to": "200",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1170,
+        "y": 780,
+        "wires": [
+            [
+                "b861ff259aeb92cf"
+            ]
+        ]
+    },
+    {
+        "id": "0bc39b3e759a2057",
+        "type": "debug",
+        "z": "50ed45470ea01d88",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "'Response: \"' & msg.payload & '\"'",
+        "targetType": "jsonata",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 860,
+        "wires": []
+    }
+]
