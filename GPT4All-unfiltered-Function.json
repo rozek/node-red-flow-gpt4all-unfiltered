@@ -1,0 +1,30 @@
+[
+    {
+        "id": "f371789b3a519a67",
+        "type": "function",
+        "z": "50ed45470ea01d88",
+        "name": "GPT4All (unfiltered)",
+        "func": "(async () => {\n  let Prompt = (msg.payload || '').trim()\n  if (Prompt === '') {\n    msg.payload = 'empty or missing prompt'\n    node.send([null,msg])\n    return\n  }\n  \n/**** retrieve GPT4All or load it upon the first request ****/\n  \n  let GPT4All = global.get('GPT4All-unfiltered')\n  if (GPT4All == null) {\n    GPT4All = new gpt4all.GPT4All('gpt4all-lora-unfiltered-quantized',true)\n  \n    await GPT4All.init()\n    node.log('GPT4All \"unfiltered\" has been initialized')\n  \n    await GPT4All.open()\n    global.set('GPT4All-unfiltered',GPT4All)\n    node.log('GPT4All \"unfiltered\" may be used')\n    \n    node.on('close',(done) => {\n      node.log('GPT4All \"unfiltered\" is being closed')\n      global.set('GPT4All-unfiltered',null)\n      GPT4All.close()\n      done()\n    })\n  }\n  \n/**** now infer a response from the given prompt ****/\n  \n  let Response = await GPT4All.prompt(Prompt)\n  \n  msg.payload = Response.replace(/^[^m]+?m[^m]+?m[^m]+?m/,'')\n  node.send([msg,null])\n})()\n",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "gpt4all",
+                "module": "gpt4all"
+            }
+        ],
+        "x": 330,
+        "y": 420,
+        "wires": [
+            [
+                "a315943ebed8c552",
+                "1f20d507affa83cb"
+            ],
+            [
+                "69b09810ae7097d4"
+            ]
+        ]
+    }
+]
